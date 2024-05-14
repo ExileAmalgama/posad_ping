@@ -12,6 +12,9 @@ class PingManager:
         self.ip = self.get_ip_from_adapter(self.known_adapters)
         # self.ip = self.get_ip("Kerio")
         self.subnet = self.get_subnet(self.ip)
+        self.not_reached_ips = []
+
+    # Getting IP address
 
     def get_ip(self, interface_description_contains):
         try:
@@ -44,12 +47,10 @@ class PingManager:
         return subnet
 
     def ping_all_ip(self, ip_list):
-        print(ip_list)
-        not_reached_ips = []
         for ip in ip_list:
             if self.stop_flag:
                 break
-            rtt = ping3.ping(ip)
+            rtt = ping3.ping(ip, timeout=1)
             if rtt is not None:
                 rtt_formatted = "{:.0f}".format(rtt * 1000)
                 result = f"{ip} was reached in {rtt_formatted} ms"
