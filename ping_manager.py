@@ -3,31 +3,15 @@ import threading
 import wmi
 import tkinter as tk
 
-# if kassa > 10, ip_range(141, 160)
-
-
 class PingManager:
     def __init__(self, gui):
         self.gui = gui
         self.stop_flag = True
         self.running_flag = False
-        self.ip = self.get_ip("Realtek PCIe GbE Family Controller")
+        self.known_adapters = ["Realtek PCIe GbE Family Controller", "Gigabit"]
+        self.ip = self.get_ip_from_adapter(self.known_adapters)
         # self.ip = self.get_ip("Kerio")
         self.subnet = self.get_subnet(self.ip)
-        # self.solo_kiosk_range = [1, 2, 41, 101]
-        # self.operator = range(1, 11)
-        # self.weights = range(11, 21)
-        # self.cash = range(21, 41)
-        # self.terminal = range(41, 61)
-        # self.fiscal = range(101, 121)
-        # self.sm_range = (
-        #     list(self.operator)
-        #     + list(self.weights)
-        #     + list(self.cash)
-        #     + list(self.terminal)
-        #     + list(self.fiscal)
-        # )
-        # print(self.subnet)
 
     def get_ip(self, interface_description_contains):
         try:
@@ -37,6 +21,19 @@ class PingManager:
                     for ip in iface.IPAddress:
                         if ":" not in ip:
                             return ip
+        except Exception as e:
+            print(f"Failed to get IPv4 address: {e}")
+        return None
+
+    def get_ip_from_adapter(self, interface_description_contains):
+        try:
+            c = wmi.WMI()
+            for iface in c.Win32_NetworkAdapterConfiguration(IPEnabled=True):
+                for i in interface_description_contains:
+                    if i and i in iface.Description:
+                        for ip in iface.IPAddress:
+                            if ":" not in ip:
+                                return ip
         except Exception as e:
             print(f"Failed to get IPv4 address: {e}")
         return None
@@ -70,28 +67,27 @@ class PingManager:
     def form_ip_list(self, operator=0, weights=0, cash=0):
         ip_list = []
         if operator:
+            self.update_results("ОПЕРАТОРСКИЕ:")
             for i in range(1, operator + 1):
                 ip_list.append(f"192.168.{self.subnet}.{i}")
-        if weights:
+            self.update_results("\n")
+        if weights:            
+            self.update_results("ВЕСЫ:")
             for i in range(1, weights + 1):
-                ip_list.append(f"192.168.{self.subnet}.{i + 10}")
+                ip_list.append(f"192.168.{self.subnet}.{i + 10}")            
+            self.update_results("\n")
         if cash:
+            self.update_results("КАССЫ:")
             for i in range(1, cash + 1):
                 ip_list.append(f"192.168.{self.subnet}.{i + 20}")
-                ip_list.append(f"192.168.{self.subnet}.{i + 40}")
+
+                if cash < 10:
+                    ip_list.append(f"192.168.{self.subnet}.{i + 40}")
+                else:
+                    ip_list.append(f"192.168.{self.subnet}.{i + 140}")
+
                 ip_list.append(f"192.168.{self.subnet}.{i + 100}")
         return ip_list
-
-    # def set_color(self, result):
-    #     color = ""
-    #     match result:
-    #         case "Aborted":
-    #             color = "red"
-    #         case "Completed":
-    #             color = "green"
-    #         case _:
-    #             color = None
-    #     return color
 
     def update_results(self, result, color=None):
         self.gui.result_text.config(state=tk.NORMAL)
