@@ -1,32 +1,12 @@
 import ping3
-import threading
-import wmi
-import tkinter as tk
 
-class PingManager:
-    def __init__(self, gui):
-        self.gui = gui
-        self.stop_flag = True
-        self.running_flag = False
+class PingHandler:
+    def __init__(self):
+        self.ip_list = []
         self.known_adapters = ["Realtek PCIe GbE Family Controller", "Gigabit"]
+        self.known_adapters = ["Kerio"]
         self.ip = self.get_ip_from_adapter(self.known_adapters)
-        # self.ip = self.get_ip("Kerio")
         self.subnet = self.get_subnet(self.ip)
-        self.not_reached_ips = []
-
-    # Getting IP address
-
-    def get_ip(self, interface_description_contains):
-        try:
-            c = wmi.WMI()
-            for iface in c.Win32_NetworkAdapterConfiguration(IPEnabled=True):
-                if interface_description_contains in iface.Description:
-                    for ip in iface.IPAddress:
-                        if ":" not in ip:
-                            return ip
-        except Exception as e:
-            print(f"Failed to get IPv4 address: {e}")
-        return None
 
     def get_ip_from_adapter(self, interface_description_contains):
         try:
@@ -47,6 +27,7 @@ class PingManager:
         return subnet
 
     def ping_all_ip(self, ip_list):
+        not_reached_ips = []
         for ip in ip_list:
             if self.stop_flag:
                 break
@@ -65,75 +46,29 @@ class PingManager:
             self.running_flag = False
             self.stop_flag = True
 
+
     def form_ip_list(self, operator=0, weights=0, cash=0):
-        ip_list = []
+
+        def append_ip_list(count, offset, additional_ips=None):
+            equipment_ip_list = []
+            for i in range(1, count + 1):
+                ip_list.append(f"192.168.{self.subnet}.{i + offset}")
+                if additional_ips:
+                    for additional_offset in additional_ips:
+                        equipment_ip_list.append(f"192.168.{self.subnet}.{i + additional_offset}")
+            return equipment_ip_list
+
+        def execute_ping_list(ip_list, offset, equipment_type):
+            self.update_results(f"{equipment_type}:")
+            equipment_list = append_ip_list(ip_list, offset)
+            self.ping_all_ip(equipment_list)
+            self.update_results("\n")
+        
         if operator:
-            self.update_results("ОПЕРАТОРСКИЕ:")
-            for i in range(1, operator + 1):
-                ip_list.append(f"192.168.{self.subnet}.{i}")
-            self.update_results("\n")
-        if weights:            
-            self.update_results("ВЕСЫ:")
-            for i in range(1, weights + 1):
-                ip_list.append(f"192.168.{self.subnet}.{i + 10}")            
-            self.update_results("\n")
+            append_ip_list(operator, 0, "Операторские")        
+        if weights:
+            append_ip_list(weights, 10, "Весы")        
         if cash:
-            self.update_results("КАССЫ:")
-            for i in range(1, cash + 1):
-                ip_list.append(f"192.168.{self.subnet}.{i + 20}")
-
-                if cash < 10:
-                    ip_list.append(f"192.168.{self.subnet}.{i + 40}")
-                else:
-                    ip_list.append(f"192.168.{self.subnet}.{i + 140}")
-
-                ip_list.append(f"192.168.{self.subnet}.{i + 100}")
+            append_ip_list(weights, 10, "Кассы")
+        
         return ip_list
-
-    def update_results(self, result, color=None):
-        self.gui.result_text.config(state=tk.NORMAL)
-        if color:
-            self.gui.result_text.tag_configure(color, foreground=color)
-            self.gui.result_text.insert(tk.END, result + "\n", color)
-        else:
-            self.gui.result_text.insert(tk.END, result + "\n")
-        self.gui.result_text.see(tk.END)
-        self.gui.result_text.config(state=tk.DISABLED)
-        self.gui.root.after(100, self.gui.result_text.update_idletasks)
-
-    def get_operator_value(self):
-        return int(self.gui.operator_entry.get()) if self.gui.operator_entry.get() else 0
-
-    def get_weights_value(self):
-        return int(self.gui.weights_entry.get()) if self.gui.weights_entry.get() else 0
-
-    def get_cash_value(self):
-        return int(self.gui.cash_entry.get()) if self.gui.cash_entry.get() else 0
-
-    def ping_sm(self):
-        if not self.running_flag:
-            self.running_flag = True
-            self.stop_flag = False
-            operator_value = self.get_operator_value()
-            weights_value = self.get_weights_value()
-            cash_value = self.get_cash_value()
-            ip_list = self.form_ip_list(
-                operator_value,
-                weights_value,
-                cash_value,
-            )
-            threading.Thread(
-                target=self.ping_all_ip,
-                args=(ip_list,),
-            ).start()
-
-    def stop_ping(self):
-        if not self.stop_flag:
-            self.running_flag = False
-            self.update_results("Aborted\n")
-        self.stop_flag = True
-
-    def clear_results(self):
-        self.gui.result_text.config(state=tk.NORMAL)
-        self.gui.result_text.delete(1.0, tk.END)
-        self.gui.result_text.config(state=tk.DISABLED)

@@ -44,3 +44,6 @@ class PingToolGUI:
 
         self.result_text = tk.Text(self.root, height=26, width=80)
         self.result_text.pack()
+
+        # self.operator_unreached_result = tk.Text(self.root, height=26, width=40)
+        # self.operator_unreached_result.pack()
