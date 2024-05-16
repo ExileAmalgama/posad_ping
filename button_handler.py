@@ -2,11 +2,12 @@ import ping3
 import threading
 import wmi
 import tkinter as tk
-import ping_handler as PingHandler
+from ping_handler import PingHandler
 
-class PingManager:
+
+class ButtonHandler:
     def __init__(self, gui):
-        self.ping_handler = PingHandler(self)
+        self.ph = PingHandler(self)
         self.gui = gui
         self.stop_flag = True
         self.running_flag = False
@@ -22,24 +23,29 @@ class PingManager:
         self.gui.result_text.config(state=tk.DISABLED)
         self.gui.root.after(100, self.gui.result_text.update_idletasks)
 
-    def get_entry_value(entry):
-    return int(entry.get()) if entry.get() else 0
+    def print_not_reached(self, not_reached_ips):
+        if not_reached_ips:
+            self.update_results("Нет ответа от:")
+            for i in not_reached_ips:
+                self.update_results(f"{i}", "red")
 
-    def ping_sm(self):
+    def ping_sm_range(self):
+        def get_entry_value(entry):
+            return int(entry.get()) if entry.get() else 0
+
         if not self.running_flag:
             self.running_flag = True
             self.stop_flag = False
             operator_value = get_entry_value(self.gui.operator_entry)
             weights_value = get_entry_value(self.gui.weights_entry)
             cash_value = get_entry_value(self.gui.cash_entry)
-            ip_list = self.form_ip_list(
-                operator_value,
+            threading.Thread(
+                target=self.ph.ping_sm_range,
+                args=(
+                    operator_value,
                 weights_value,
                 cash_value,
-            )
-            threading.Thread(
-                target=self.ping_all_ip,
-                args=(ip_list,),
+                ),
             ).start()
 
     def stop_ping(self):

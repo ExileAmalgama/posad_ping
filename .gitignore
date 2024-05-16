@@ -1,4 +1,5 @@
-/other
-/build
-/dist
+other/
+build/
+dist/
+__pycache__/
 main.spec
