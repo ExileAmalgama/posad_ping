@@ -1,6 +1,4 @@
-import ping3
 import threading
-import wmi
 import tkinter as tk
 from ping_handler import PingHandler
 
@@ -43,8 +41,8 @@ class ButtonHandler:
                 target=self.ph.ping_sm_range,
                 args=(
                     operator_value,
-                weights_value,
-                cash_value,
+                    weights_value,
+                    cash_value,
                 ),
             ).start()
 
@@ -55,6 +53,10 @@ class ButtonHandler:
         self.stop_flag = True
 
     def clear_results(self):
+        self.gui.operator_entry.delete(0, tk.END)
+        self.gui.weights_entry.delete(0, tk.END)
+        self.gui.cash_entry.delete(0, tk.END)
+
         self.gui.result_text.config(state=tk.NORMAL)
         self.gui.result_text.delete(1.0, tk.END)
         self.gui.result_text.config(state=tk.DISABLED)

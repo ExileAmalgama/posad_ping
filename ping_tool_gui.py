@@ -65,7 +65,6 @@ class PingToolGUI:
         )
         self.clear_button.pack(side=tk.LEFT, padx=5)
 
-
         # Text Fields
         self.result_text = tk.Text(self.root, height=26, width=80)
         self.result_text.pack(fill="both", expand=True)

@@ -13,7 +13,6 @@ class PingHandler:
         self.subnet = self.get_subnet(self.ip)
 
     def get_ip_from_adapter(self, interface_description_contains):
-    
         try:
             c = wmi.WMI()
             for iface in c.Win32_NetworkAdapterConfiguration(IPEnabled=True):
