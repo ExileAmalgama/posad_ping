@@ -14,7 +14,7 @@ class PingToolGUI:
 
     def create_widgets(self):
         # Labels
-        tk.Label(self.root, text="Операторские ПК:").pack()
+        tk.Label(self.root, text="Операторские:").pack()
         self.operator_entry = tk.Entry(self.root)
         self.operator_entry.pack()
 

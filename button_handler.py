@@ -8,7 +8,6 @@ class ButtonHandler:
         self.ph = PingHandler(self)
         self.gui = gui
         self.stop_flag = True
-        self.running_flag = False
 
     def update_results(self, result, color=None):
         self.gui.result_text.config(state=tk.NORMAL)
@@ -21,18 +20,11 @@ class ButtonHandler:
         self.gui.result_text.config(state=tk.DISABLED)
         self.gui.root.after(100, self.gui.result_text.update_idletasks)
 
-    def print_not_reached(self, not_reached_ips):
-        if not_reached_ips:
-            self.update_results("Нет ответа от:")
-            for i in not_reached_ips:
-                self.update_results(f"{i}", "red")
-
     def ping_sm_range(self):
         def get_entry_value(entry):
             return int(entry.get()) if entry.get() else 0
 
-        if not self.running_flag:
-            self.running_flag = True
+        if self.stop_flag:
             self.stop_flag = False
             operator_value = get_entry_value(self.gui.operator_entry)
             weights_value = get_entry_value(self.gui.weights_entry)
@@ -48,15 +40,10 @@ class ButtonHandler:
 
     def stop_ping(self):
         if not self.stop_flag:
-            self.running_flag = False
             self.update_results("Aborted\n")
         self.stop_flag = True
 
     def clear_results(self):
-        self.gui.operator_entry.delete(0, tk.END)
-        self.gui.weights_entry.delete(0, tk.END)
-        self.gui.cash_entry.delete(0, tk.END)
-
         self.gui.result_text.config(state=tk.NORMAL)
         self.gui.result_text.delete(1.0, tk.END)
         self.gui.result_text.config(state=tk.DISABLED)
