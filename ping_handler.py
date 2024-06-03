@@ -6,112 +6,62 @@ class PingHandler:
     def __init__(self, button_handler):
         self.bh = button_handler
         self.equip = EquipmentManager()
+        self.not_reached_ip = set()
         self.general_ip_list = set()
-    #     self.equipment_types = {
-    #         'operator': {0: "Операторский"},
-    #         'weights': {10: "Весы"},
-    #         'cash': {20: "Касса"},
-    #         'terminal': {40: "Терминал"},
-    #         'terminal_long': {140: "Терминал"},
-    #         'exelio': {100: "Кассовый аппарат"}
-    #     }
-    #     self.known_adapters = ["Realtek PCIe GbE Family Controller", "Gigabit"]
-    #     self.known_adapters = ["Kerio"]
-    #     self.ip = self.get_ip_from_adapter(self.known_adapters)
-    #     self.subnet = self.get_subnet(self.ip)
 
-    # def get_ip_from_adapter(self, interface_description_contains):
-    #     try:
-    #         c = wmi.WMI()
-    #         for iface in c.Win32_NetworkAdapterConfiguration(IPEnabled=True):
-    #             for i in interface_description_contains:
-    #                 if i and i in iface.Description:
-    #                     for ip in iface.IPAddress:
-    #                         if ":" not in ip:
-    #                             return ip
-    #     except Exception as e:
-    #         print(f"Failed to get IPv4 address: {e}")
-    #     return None
+    def update_equipment_values(self, operator, weights, cash):
+        self.equip.set_equipment_value('operator', operator)
+        self.equip.set_equipment_value('weights', weights)
+        self.equip.set_equipment_value('cash', cash)
 
-    # def get_subnet(self, ip):
-    #     ip_split = ip.split(".")
-    #     subnet = ip_split[2]
-    #     return subnet
-
-    def ping_all_ip(self, ip_list, equipment_type):
+    def ping_all_ip(self, ip_list, key):
+        name = self.equip.equipment[key]['name']
         ip_counter = 0
         for ip in ip_list:
             ip_counter += 1
             if self.bh.stop_flag:
+                self.update_results("Stopped")
                 break
-            rtt = ping3.ping(ip, timeout=1)
-            if rtt is not None:
-                rtt_formatted = "{:.0f}".format(rtt * 1000)
-                result = f"{equipment_type} {ip_counter}({ip}) was reached in {rtt_formatted} ms"
-                color = "green"
-            else:
-                result = f"{equipment_type} {ip_counter}({ip}) was not reached"
-                color = "red"
-                self.not_reached_ip.append(f"{ip}")
-            self.bh.update_results(result, color)
+            self.ping_ip(ip, name, ip_counter)
 
-    def print_not_reached(self, not_reached_ip):
-        if not_reached_ip:
+    def ping_ip(self, ip, name, ip_counter):
+        rtt = ping3.ping(ip, timeout=1)
+        if rtt is not None:
+            rtt_formatted = "{:.0f}".format(rtt * 1000)
+            result = f"{name} {ip_counter}({ip}): was reached in {rtt_formatted} ms"
+            color = "green"
+        else:
+            result = f"{name} {ip_counter}({ip}): was not reached"
+            color = "red"
+            self.not_reached_ip.add(ip)
+        self.bh.update_results(result, color)
+
+    def print_not_reached(self):
+        not_reached = self.not_reached_ip
+        if sorted(not_reached, key=lambda x: int(x)):
             self.bh.update_results("Нет ответа от:")
-            for ip in not_reached_ip:
-                self.bh.update_results(f"=({ip})", "red")
+            for ip in not_reached:
+                self.bh.update_results(ip, "red")
 
-    def ping_sm_range(self, operator=0, weights=0, cash=0):
-        self.not_reached_ip = []
-        # Make a list instead?
-        self.equip.set_equipment_value('operator', operator) # ???
-        self.equip.set_equipment_value(weights)
-        self.equip.set_equipment_value(cash)
-        
-
-        def form_ip_list(count, offset):
-            equipment_list = []
-            for i in range(1, count + 1):
-                equipment_list.append(f"192.168.{self.subnet}.{i + offset}")
-            return equipment_list
-
-        def execute_ping_list(equipment_type, offset, equipment_name):
-            self.bh.update_results(f"{equipment_name}:")
-            equipment_list = form_ip_list(equipment_type, offset)
+    def ping_sm(self):
+        for key in self.equip.equipment.keys():
+            self.bh.update_results(f"{self.equip.equipment[key]['name']}:")
+            equipment_list = self.form_ip_list(key)
             self.general_ip_list.update(equipment_list)
-            self.ping_all_ip(equipment_list, equipment_name)
+            self.ping_all_ip(equipment_list, key)
             self.bh.update_results("\n")
-
-        def ip_key(ip):
-            return tuple(map(int, ip.split(".")))
-
-        def equipment_ping():
-                    # if weights and not self.bh.stop_flag:
-                    #     execute_ping_list(weights, self.equipment_types_keys[1], "Весы", "Весы")
-                    # if cash and not self.bh.stop_flag:
-                    #     execute_ping_list(cash, self.equipment_types_keys[2], "Касса", "Кассы")
-                    #     if not self.bh.stop_flag:
-                    #         if cash < 10:
-                    #             execute_ping_list(
-                    #                 cash, self.equipment_types_keys[3], "Терминал", "Терминалы"
-                    #             )
-                    #         else:
-                    #             execute_ping_list(
-                    #                 cash, self.equipment_types_keys[4], "Терминал", "Терминалы"
-                    #             )
-                    #     if not self.bh.stop_flag:
-                    #         execute_ping_list(
-                    #             cash,
-                    #             self.equipment_types_keys[5],
-                    #             "Кассовый аппарат",
-                    #             "Кассовые аппараты",
-                    #         )
-
-            if self.not_reached_ip and not self.bh.stop_flag:
-                self.print_not_reached(sorted(self.not_reached_ip, key=ip_key))
-
-        equipment_ping()
-
-        self.bh.update_results("\n")
-
+        self.print_not_reached()
         self.bh.stop_flag = True
+
+    def form_ip_list(self, equipment, count_from=1, count_to=1):
+        equipment_list = []
+        max_value = self.equip.equipment[equipment]['value']
+        if count_to > 1 and count_to <= max_value:
+            for i in range(count_from, count_to + 1):
+                equipment_list.append(f"192.168.{self.equip.subnet}.{i + self.equip.equipment[equipment]['offset']}")
+        elif count_to > max_value:
+            self.bh.update_results("Out of range")
+        else:
+            for i in range(count_from, max_value + 1):
+                equipment_list.append(f"192.168.{self.equip.subnet}.{i + self.equip.equipment[equipment]['offset']}")
+        return equipment_list

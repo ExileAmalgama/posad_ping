@@ -5,7 +5,6 @@ from ping_handler import PingHandler
 
 class ButtonHandler:
     def __init__(self, gui):
-        self.ph = PingHandler(self)
         self.gui = gui
         self.stop_flag = True
 
@@ -29,14 +28,15 @@ class ButtonHandler:
             operator_value = get_entry_value(self.gui.operator_entry)
             weights_value = get_entry_value(self.gui.weights_entry)
             cash_value = get_entry_value(self.gui.cash_entry)
-            threading.Thread(
-                target=self.ph.ping_sm_range,
-                args=(
-                    operator_value,
-                    weights_value,
-                    cash_value,
-                ),
-            ).start()
+
+            self.ph = PingHandler(self)
+            self.ph.update_equipment_values(
+                operator_value,
+                weights_value,
+                cash_value
+            )
+
+            threading.Thread(target=self.ph.ping_sm).start()
 
     def stop_ping(self):
         if not self.stop_flag:
