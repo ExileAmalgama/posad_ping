@@ -13,33 +13,39 @@ class PingToolGUI:
         self.create_widgets()
 
     def create_widgets(self):
-        # Labels
-        tk.Label(self.root, text="Операторские:").pack()
-        self.operator_entry = tk.Entry(self.root)
-        self.operator_entry.pack()
+        # Main frame
+        main_frame = ttk.Frame(self.root, padding="10")
+        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
 
-        tk.Label(self.root, text="Весы:").pack()
-        self.weights_entry = tk.Entry(self.root)
-        self.weights_entry.pack()
+        # Equipment frame
+        equipment_frame = ttk.Frame(main_frame, padding="5")
+        equipment_frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
 
-        tk.Label(self.root, text="Кассы:").pack()
-        self.cash_entry = tk.Entry(self.root)
-        self.cash_entry.pack()
+        ttk.Label(equipment_frame, text="Операторские:").grid(row=0, column=0, sticky=tk.W)
+        self.operator_entry = ttk.Entry(equipment_frame)
+        self.operator_entry.grid(row=0, column=1, padx=5, pady=2)
 
-        tk.Label(self.root, text="").pack()
+        ttk.Label(equipment_frame, text="Весы:").grid(row=1, column=0, sticky=tk.W)
+        self.weights_entry = ttk.Entry(equipment_frame)
+        self.weights_entry.grid(row=1, column=1, padx=5, pady=2)
 
-        # Buttons
+        ttk.Label(equipment_frame, text="Кассы:").grid(row=2, column=0, sticky=tk.W)
+        self.cash_entry = ttk.Entry(equipment_frame)
+        self.cash_entry.grid(row=2, column=1, padx=5, pady=2)
+
+        # Buttons frame
+        button_frame = ttk.Frame(main_frame, padding="5")
+        button_frame.grid(row=1, column=0, pady=10, sticky=(tk.W, tk.E))
+        button_frame.columnconfigure([0, 1, 2], weight=1)
+
         style = ttk.Style()
         style.configure(
             "Custom.TButton",
-            foreground="black",
-            background="lightgray",
             padding=10,
             width=18,
         )
-
-        button_frame = tk.Frame(self.root)
-        button_frame.pack(pady=5)
 
         self.ping_sm_button = ttk.Button(
             button_frame,
@@ -47,7 +53,7 @@ class PingToolGUI:
             style="Custom.TButton",
             command=self.manager.ping_sm_range,
         )
-        self.ping_sm_button.pack(side=tk.LEFT, padx=5)
+        self.ping_sm_button.grid(row=0, column=0, padx=5)
 
         self.stop_button = ttk.Button(
             button_frame,
@@ -55,7 +61,7 @@ class PingToolGUI:
             style="Custom.TButton",
             command=self.manager.stop_ping,
         )
-        self.stop_button.pack(side=tk.LEFT, padx=5)
+        self.stop_button.grid(row=0, column=1, padx=5)
 
         self.clear_button = ttk.Button(
             button_frame,
@@ -63,8 +69,16 @@ class PingToolGUI:
             style="Custom.TButton",
             command=self.manager.clear_results,
         )
-        self.clear_button.pack(side=tk.LEFT, padx=5)
+        self.clear_button.grid(row=0, column=2, padx=5)
 
-        # Text Fields
-        self.result_text = tk.Text(self.root, height=26, width=80)
-        self.result_text.pack(fill="both", expand=True)
+        # Result text with scrollbar
+        result_frame = ttk.Frame(main_frame, padding="5")
+        result_frame.grid(row=2, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        main_frame.rowconfigure(2, weight=1)
+
+        self.result_text = tk.Text(result_frame, height=26, wrap=tk.WORD)
+        self.result_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+
+        scrollbar = ttk.Scrollbar(result_frame, orient=tk.VERTICAL, command=self.result_text.yview)
+        scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
+        self.result_text['yscrollcommand'] = scrollbar.set

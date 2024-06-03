@@ -30,11 +30,7 @@ class ButtonHandler:
             cash_value = get_entry_value(self.gui.cash_entry)
 
             self.ph = PingHandler(self)
-            self.ph.update_equipment_values(
-                operator_value,
-                weights_value,
-                cash_value
-            )
+            self.ph.update_equipment_values(operator_value, weights_value, cash_value)
 
             threading.Thread(target=self.ph.ping_sm).start()
 
