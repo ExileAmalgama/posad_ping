@@ -1,5 +1,6 @@
 import ping3
 from equipment_manager import EquipmentManager
+import concurrent.futures
 
 
 class PingHandler:
@@ -20,7 +21,7 @@ class PingHandler:
         for ip in ip_list:
             count += 1
             if self.bh.stop_flag:
-                self.update_results("Stopped")
+                self.update_results("Остановлено")
                 break
             self.ping_ip(ip, name, count)
 
@@ -28,12 +29,13 @@ class PingHandler:
         rtt = ping3.ping(ip, timeout=1)
         if rtt is not None:
             rtt_formatted = "{:.0f}".format(rtt * 1000)
-            result = f"{name} {count}({ip}): was reached in {rtt_formatted} ms"
+            result = f"{name} {count} ({ip}): ответ за {rtt_formatted} мс"
             color = "green"
         else:
-            result = f"{name} {count}({ip}): was not reached"
+            result = f"{name} {count} ({ip}): нет ответа"
             color = "red"
             self.not_reached_ip.add(ip)
+        self.general_ip_list.add(ip)
         self.bh.update_results(result, color)
 
     def print_not_reached(self):
@@ -42,6 +44,13 @@ class PingHandler:
             self.bh.update_results("Нет ответа от:")
             for ip in sorted(not_reached, key=self.sort_ip):
                 self.bh.update_results(f"{ip}", "red")
+
+    def print_availability(self):
+        all_ip_num = len(self.general_ip_list)
+        available_num = all_ip_num - len(self.not_reached_ip)
+        self.bh.update_results(
+            f"{len(self.not_reached_ip)} из {len(self.general_ip_list)} устройств недоступны.\n"
+        )
 
     def sort_ip(self, ip):
         parts = ip.split(".")
@@ -54,7 +63,9 @@ class PingHandler:
             self.general_ip_list.update(equipment_list)
             self.ping_all_ip(equipment_list, key)
             self.bh.update_results("\n")
+        self.print_availability()
         self.print_not_reached()
+
         self.bh.stop_flag = True
 
     def form_ip_list(self, equipment, count_from=1, count_to=1):

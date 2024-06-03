@@ -23,7 +23,9 @@ class PingToolGUI:
         equipment_frame = ttk.Frame(main_frame, padding="5")
         equipment_frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
 
-        ttk.Label(equipment_frame, text="Операторские:").grid(row=0, column=0, sticky=tk.W)
+        ttk.Label(equipment_frame, text="Операторские:").grid(
+            row=0, column=0, sticky=tk.W
+        )
         self.operator_entry = ttk.Entry(equipment_frame)
         self.operator_entry.grid(row=0, column=1, padx=5, pady=2)
 
@@ -79,6 +81,8 @@ class PingToolGUI:
         self.result_text = tk.Text(result_frame, height=26, wrap=tk.WORD)
         self.result_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
-        scrollbar = ttk.Scrollbar(result_frame, orient=tk.VERTICAL, command=self.result_text.yview)
+        scrollbar = ttk.Scrollbar(
+            result_frame, orient=tk.VERTICAL, command=self.result_text.yview
+        )
         scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
-        self.result_text['yscrollcommand'] = scrollbar.set
+        self.result_text["yscrollcommand"] = scrollbar.set

@@ -7,6 +7,7 @@ class ButtonHandler:
     def __init__(self, gui):
         self.gui = gui
         self.stop_flag = True
+        self.thread = None
 
     def update_results(self, result, color=None):
         self.gui.result_text.config(state=tk.NORMAL)
@@ -32,12 +33,15 @@ class ButtonHandler:
             self.ph = PingHandler(self)
             self.ph.update_equipment_values(operator_value, weights_value, cash_value)
 
-            threading.Thread(target=self.ph.ping_sm).start()
+            self.thread = threading.Thread(target=self.ph.ping_sm)
+            self.thread.start()
 
     def stop_ping(self):
         if not self.stop_flag:
             self.update_results("Aborted\n")
         self.stop_flag = True
+        if self.thread and self.thread.is_alive():
+            self.thread.join()
 
     def clear_results(self):
         self.gui.result_text.config(state=tk.NORMAL)
