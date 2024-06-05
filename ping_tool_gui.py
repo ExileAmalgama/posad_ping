@@ -51,7 +51,7 @@ class PingToolGUI:
 
         self.ping_sm_button = ttk.Button(
             button_frame,
-            text="Ping SM",
+            text="Пинг",
             style="Custom.TButton",
             command=self.manager.ping_sm_range,
         )
@@ -59,7 +59,7 @@ class PingToolGUI:
 
         self.stop_button = ttk.Button(
             button_frame,
-            text="Stop",
+            text="Остановить",
             style="Custom.TButton",
             command=self.manager.stop_ping,
         )
@@ -67,7 +67,7 @@ class PingToolGUI:
 
         self.clear_button = ttk.Button(
             button_frame,
-            text="Clear",
+            text="Очистить",
             style="Custom.TButton",
             command=self.manager.clear_results,
         )

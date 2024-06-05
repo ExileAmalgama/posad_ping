@@ -21,7 +21,7 @@ class PingHandler:
         for ip in ip_list:
             count += 1
             if self.bh.stop_flag:
-                self.update_results("Остановлено")
+                self.bh.update_results("Отмена операции\n\n")
                 break
             self.ping_ip(ip, name, count)
 
@@ -48,24 +48,32 @@ class PingHandler:
     def print_availability(self):
         all_ip_num = len(self.general_ip_list)
         available_num = all_ip_num - len(self.not_reached_ip)
-        self.bh.update_results(
-            f"{len(self.not_reached_ip)} из {len(self.general_ip_list)} устройств недоступны.\n"
-        )
+        if self.bh.stop_flag == True:
+            return
+        if self.not_reached_ip:
+            self.bh.update_results(
+                f"{len(self.not_reached_ip)} из {len(self.general_ip_list)} устройств недоступны\n\n"
+            )
+        else:
+            self.bh.update_results("Все устройства в сети\n\n")
 
     def sort_ip(self, ip):
         parts = ip.split(".")
         return [int(part) for part in parts]
 
+    # Make a tuple to later iterate over it?
     def ping_sm(self):
         for key in self.equip.equipment.keys():
+            if not self.equip.equipment[key]["value"]:
+                continue
             self.bh.update_results(f"{self.equip.equipment[key]['name']}:")
             equipment_list = self.form_ip_list(key)
             self.general_ip_list.update(equipment_list)
             self.ping_all_ip(equipment_list, key)
             self.bh.update_results("\n")
-        self.print_availability()
-        self.print_not_reached()
-
+        if self.bh.stop_flag == False:
+            self.print_availability()
+            self.print_not_reached()
         self.bh.stop_flag = True
 
     def form_ip_list(self, equipment, count_from=1, count_to=1):
@@ -75,7 +83,7 @@ class PingHandler:
 
         if count_to > 1 and count_to <= max_value:
             range_to_use = range(count_from, count_to + 1)
-        elif count_to > max_value:
+        elif count_to > max_value and max_value:
             self.bh.update_results("Out of range")
             return []
         else:

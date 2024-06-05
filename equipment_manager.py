@@ -1,4 +1,5 @@
 import wmi
+import logging
 
 
 class EquipmentManager:
@@ -11,7 +12,7 @@ class EquipmentManager:
             "exelio": {"offset": 100, "name": "Кассовые аппараты", "value": 0},
         }
         self.known_adapters = ["Realtek PCIe GbE Family Controller", "Gigabit"]
-        self.known_adapters = ["Kerio"]
+        # self.known_adapters = ["Kerio"]
         self.ip = self.get_ip_from_adapter(self.known_adapters)
         self.subnet = self.get_subnet(self.ip) if self.ip else None
 
@@ -37,7 +38,7 @@ class EquipmentManager:
                             if ":" not in ip:
                                 return ip
         except Exception as e:
-            print(f"Failed to get IPv4 address: {e}")
+            logging.error(f"Failed to get IPv4 address: {e}")
         return None
 
     def get_subnet(self, ip):

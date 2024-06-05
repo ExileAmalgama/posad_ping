@@ -37,11 +37,7 @@ class ButtonHandler:
             self.thread.start()
 
     def stop_ping(self):
-        if not self.stop_flag:
-            self.update_results("Aborted\n")
         self.stop_flag = True
-        if self.thread and self.thread.is_alive():
-            self.thread.join()
 
     def clear_results(self):
         self.gui.result_text.config(state=tk.NORMAL)
